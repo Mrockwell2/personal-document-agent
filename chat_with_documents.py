@@ -138,7 +138,7 @@ def ask_and_get_answer(vector_store, q, role=None, k=3):
 
     # Define the prompt template
     if role:
-        template = f"You are answering as a {role}. Only provide answers relevant to this role based on the given information:\n"
+        template = f"The user is acting as a {role}. Only provide answers relevant to this role based on the given information:\n"
     else:
         template =  "Answer the question based on the given information:\n" 
         
@@ -190,14 +190,12 @@ if __name__ == "__main__":
 
     # Load environment variables
     load_dotenv(find_dotenv(), override=True)
-    
-    # Initialize Pinecone
-    pc = Pinecone(os.environ.get("PINECONE_API_KEY"))
 
     # Define default guardrails
     default_rules = "Use only the information provided in the document.\n" + \
                     "Provide concise and accurate answers.\n" + \
-                    "Do not include any external information or assumptions.\n"
+                    "Do not include any external information or assumptions.\n" + \
+                    "When the user asks what their role is, tell them what they are acting as.\n"
     save_guardrails(default_rules)
 
     # Streamlit UI setup
@@ -205,23 +203,31 @@ if __name__ == "__main__":
     st.divider()
     st.subheader('LLM Question-Answering Application 🤖')
     
+    # Retrieve the Pinecone API key from environment variables
+    pinecone_api_key = os.environ.get("PINECONE_API_KEY") or ""
+
     # Retrieve AWS credentials from environment variables
     aws_access_key_id = os.environ.get('AWS_ACCESS_KEY_ID') or ""
     aws_secret_access_key = os.environ.get('AWS_SECRET_ACCESS_KEY') or ""
-    aws_session_token = os.environ.get('AWS_SESSION_TOKEN') or ""
+    # aws_session_token = os.environ.get('AWS_SESSION_TOKEN') or ""
     
     # Streamlit sidebar for user inputs
     with st.sidebar:
         # Input fields for AWS credentials
         access_key = st.text_input('AWS Access Key ID:', type='password', value=aws_access_key_id)
         secret_key = st.text_input('AWS Secret Access Key:', type='password', value=aws_secret_access_key)
-        session_token = st.text_input('AWS Session Token:', type='password', value=aws_session_token)
+        # session_token = st.text_input('AWS Session Token:', type='password', value=aws_session_token)
+
+        # Input field for Pinecone API key
+        api_key = st.text_input('Pinecone API key:', type='password', value=pinecone_api_key)
         
         # Set environment variables if credentials are provided
-        if access_key and secret_key:
+        if access_key and secret_key and api_key:
             os.environ['AWS_ACCESS_KEY_ID'] = access_key
             os.environ['AWS_SECRET_ACCESS_KEY'] = secret_key
-            os.environ['AWS_SESSION_TOKEN'] = session_token
+            # os.environ['AWS_SESSION_TOKEN'] = session_token
+            os.environ['PINECONE_API_KEY'] = api_key
+            st.success('AWS credentials and Pinecone API key saved successfully.')
 
         # File uploader for document upload
         uploaded_file = st.file_uploader('Upload a file:', type=['pdf', 'docx', 'txt'])
@@ -233,11 +239,11 @@ if __name__ == "__main__":
         # Checkbox to enable or disable guardrails
         guardrails_on = st.checkbox('Enable Guardrails', value=True)
         if guardrails_on:
-            st.write('Guardrails are enabled.')
             # Expander to edit guardrails
             with st.expander('Edit Guardrails'):
                 rules = st.text_area('Guardrails', label_visibility="collapsed", value=default_rules, height=100)
                 save_guardrails(rules if rules else "")
+                st.success('Guardrails saved successfully.')
         else:
             st.write('Guardrails are disabled.')
             save_guardrails("")
@@ -252,7 +258,10 @@ if __name__ == "__main__":
 
         # Process the uploaded file when the button is clicked
         if uploaded_file and add_data:
-            if access_key and secret_key:
+            if access_key and secret_key and api_key:
+                # Initialize Pinecone
+                pc = Pinecone(pinecone_api_key)
+            
                 # Read the uploaded file
                 bytes_data = uploaded_file.read()
                 file_name = os.path.join('./', uploaded_file.name)

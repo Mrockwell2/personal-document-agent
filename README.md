@@ -11,21 +11,7 @@ How to run this project ?
 1. Run `pip install -r requirements.txt`
 2. Run `streamlit run ./chat_with_documents.py`
 
-### Approach #1A: OpenAI
-
-1. Add .env file after you clone this project.
-2. Paste the below code and add the values for your APIs
-
-```sh
-OPENAI_API_KEY=""
-PINECONE_API_KEY=""
-PINECONE_ENV=""
-```
-
-3. Run `pip install -r requirements.txt`
-4. Finally run `streamlit run ./chat_with_documents.py`
-
-### Approach #1B: Amazon Bedrock
+### Approach #1: 
 
 1. Add .env file after you clone this project.
 2. Paste the below code and add the values for your APIs
@@ -39,7 +25,7 @@ PINECONE_ENV=""
 ```
 
 3. Run `pip install -r requirements.txt`
-4. Finally run `streamlit run ./aws_chat_with_documents.py`
+4. Finally run `streamlit run ./chat_with_documents.py`
 
 N.B. Make sure AWS is configured on your machine (run `aws configure`) 
 
